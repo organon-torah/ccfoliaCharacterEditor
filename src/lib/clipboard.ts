@@ -23,6 +23,18 @@ const DEFAULT_CHARACTER: Character = {
   owner: null
 };
 
+const OMITTED_CHARACTER_KEYS = new Set([
+  "iconUrl",
+  "faces",
+  "angle",
+  "height",
+  "active",
+  "secret",
+  "invisible",
+  "hideStatus",
+  "owner"
+]);
+
 export class ClipboardDataError extends Error {
   constructor(message: string) {
     super(message);
@@ -89,7 +101,7 @@ export function serializeClipboardJson(character: Character): string {
   return JSON.stringify(
     {
       kind: "character",
-      data: character
+      data: toSerializableCharacter(character)
     },
     null,
     2
@@ -98,6 +110,10 @@ export function serializeClipboardJson(character: Character): string {
 
 export function createEmptyCharacter(): Character {
   return normalizeCharacterData({ name: "新しいキャラクター" });
+}
+
+function toSerializableCharacter(character: Character): Partial<Character> {
+  return Object.fromEntries(Object.entries(character).filter(([key]) => !OMITTED_CHARACTER_KEYS.has(key))) as Partial<Character>;
 }
 
 function normalizeStatusArray(value: unknown): CharacterStatus[] {

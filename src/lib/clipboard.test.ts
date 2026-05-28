@@ -38,10 +38,16 @@ describe("clipboard helpers", () => {
   it("serializes a character as CCFOLIA clipboard data", () => {
     const character = createEmptyCharacter();
     character.name = "Serialized";
+    character.x = 10;
+    character.width = 6;
+    character.hideStatus = true;
 
-    expect(JSON.parse(serializeClipboardJson(character))).toEqual({
+    const serialized = JSON.parse(serializeClipboardJson(character));
+
+    expect(serialized).toEqual({
       kind: "character",
-      data: expect.objectContaining({ name: "Serialized" })
+      data: expect.objectContaining({ name: "Serialized", x: 10, width: 6 })
     });
+    expect(serialized.data).not.toHaveProperty("hideStatus");
   });
 });
