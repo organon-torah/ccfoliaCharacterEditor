@@ -467,13 +467,11 @@ function DiffValue({ value, compareWith }: { value: unknown; compareWith: unknow
   if (isRecord(value) && "label" in value) {
     if ("max" in value) {
       const compareRecord = isRecord(compareWith) ? compareWith : {};
-      const statusText = `${formatImportValue(value.value)} / ${formatImportValue(value.max)}`;
-      const compareStatusText = `${formatImportValue(compareRecord.value)} / ${formatImportValue(compareRecord.max)}`;
 
       return (
         <dl className="diff-object">
           <DiffProperty label="ラベル" value={value.label} compareWith={compareRecord.label} />
-          <DiffProperty label="現在値 / 最大値" value={statusText} compareWith={compareStatusText} />
+          <StatusDiffProperty value={value.value} max={value.max} compareValue={compareRecord.value} compareMax={compareRecord.max} />
         </dl>
       );
     }
@@ -496,6 +494,19 @@ function DiffProperty({ label, value, compareWith }: { label: string; value: unk
     <>
       <dt>{label}</dt>
       <dd className={changed ? "diff-changed" : undefined}>{formatImportValue(value)}</dd>
+    </>
+  );
+}
+
+function StatusDiffProperty({ value, max, compareValue, compareMax }: { value: unknown; max: unknown; compareValue: unknown; compareMax: unknown }) {
+  return (
+    <>
+      <dt>現在値 / 最大値</dt>
+      <dd>
+        <span className={!isSameImportValue(value, compareValue) ? "diff-changed" : undefined}>{formatImportValue(value)}</span>
+        <span> / </span>
+        <span className={!isSameImportValue(max, compareMax) ? "diff-changed" : undefined}>{formatImportValue(max)}</span>
+      </dd>
     </>
   );
 }

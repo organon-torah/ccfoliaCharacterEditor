@@ -78,6 +78,8 @@ describe("App", () => {
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
     await user.clear(screen.getByLabelText("現在値"));
     await user.type(screen.getByLabelText("現在値"), "8");
+    await user.clear(screen.getByLabelText("最大値"));
+    await user.type(screen.getByLabelText("最大値"), "20");
     fireEvent.change(screen.getByLabelText("入力JSON"), {
       target: {
         value: JSON.stringify({
@@ -105,7 +107,9 @@ describe("App", () => {
     expect(Boolean(statusGroup.compareDocumentPosition(paramGroup) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     expect(Boolean(paramGroup.compareDocumentPosition(commandRow as Element) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
-    expect(screen.getByText("12 / 20")).toHaveClass("diff-changed");
+    const hpDiff = screen.getByRole("checkbox", { name: "ステータス: HP" }).closest(".diff-row") as HTMLElement;
+    expect(within(hpDiff).getByText("12")).toHaveClass("diff-changed");
+    expect(within(hpDiff).getAllByText("20")[0]).not.toHaveClass("diff-changed");
     await user.click(screen.getByRole("checkbox", { name: "ステータス: MP" }));
     await user.click(screen.getByRole("button", { name: "選択項目を上書き" }));
 
