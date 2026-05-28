@@ -75,7 +75,8 @@ describe("App", () => {
               { label: "HP", value: 12, max: 20 },
               { label: "MP", value: 5, max: 9 }
             ],
-            params: [{ label: "器用B", value: "2" }]
+            params: [{ label: "器用B", value: "2" }],
+            commands: "2d6"
           }
         })
       }
@@ -85,6 +86,12 @@ describe("App", () => {
     expect(screen.getByRole("checkbox", { name: "ステータス: HP" })).not.toBeChecked();
     expect(screen.getByRole("checkbox", { name: "ステータス: MP" })).not.toBeChecked();
     expect(screen.getByRole("checkbox", { name: "パラメータ: 器用B" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "チャットパレット" })).not.toBeChecked();
+    const statusGroup = screen.getByLabelText("ステータス");
+    const paramGroup = screen.getByLabelText("パラメータ");
+    const commandRow = screen.getByRole("checkbox", { name: "チャットパレット" }).closest(".diff-row");
+    expect(Boolean(statusGroup.compareDocumentPosition(paramGroup) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(Boolean(paramGroup.compareDocumentPosition(commandRow as Element) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     expect(screen.queryByText("[object Object]")).not.toBeInTheDocument();
     expect(screen.getByText("12 / 20")).toHaveClass("diff-changed");
     await user.click(screen.getByRole("checkbox", { name: "ステータス: MP" }));

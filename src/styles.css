@@ -395,7 +395,8 @@ h2 {
 }
 
 .compact-diff-row {
-  border-color: #e4e9e4;
+  border: 0;
+  border-radius: 0;
   padding: 8px;
 }
 

@@ -307,9 +307,10 @@ function renderDiffRow(diff: ImportDiff, selectedIds: string[], onToggle: (id: s
 }
 
 function getDiffGroups(diffs: ImportDiff[]): Array<{ title: string | null; diffs: ImportDiff[] }> {
-  const normalDiffs = diffs.filter((diff) => !diff.id.startsWith("status:") && !diff.id.startsWith("params:"));
+  const normalDiffs = diffs.filter((diff) => !diff.id.startsWith("status:") && !diff.id.startsWith("params:") && diff.id !== "commands");
   const statusDiffs = diffs.filter((diff) => diff.id.startsWith("status:"));
   const paramDiffs = diffs.filter((diff) => diff.id.startsWith("params:"));
+  const commandDiffs = diffs.filter((diff) => diff.id === "commands");
   const groups: Array<{ title: string | null; diffs: ImportDiff[] }> = [];
 
   if (normalDiffs.length > 0) {
@@ -322,6 +323,10 @@ function getDiffGroups(diffs: ImportDiff[]): Array<{ title: string | null; diffs
 
   if (paramDiffs.length > 0) {
     groups.push({ title: "パラメータ", diffs: paramDiffs });
+  }
+
+  if (commandDiffs.length > 0) {
+    groups.push({ title: null, diffs: commandDiffs });
   }
 
   return groups;
