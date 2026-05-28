@@ -37,8 +37,13 @@ describe("App", () => {
     await user.type(screen.getByLabelText("名前"), "Changed");
     await user.click(screen.getByRole("button", { name: "リセット" }));
 
+    expect(screen.getByRole("dialog", { name: "リセットしますか？" })).toBeInTheDocument();
+    expect(screen.getByLabelText("名前")).toHaveValue("Changed");
+    await user.click(screen.getByRole("button", { name: "リセットする" }));
+
     expect(screen.getByLabelText("名前")).toHaveValue("新しいキャラクター");
     expect(getOutputValue()).toContain('"name": "新しいキャラクター"');
+    expect(screen.queryByRole("dialog", { name: "リセットしますか？" })).not.toBeInTheDocument();
   });
 
   it("reviews import differences before applying selected fields", async () => {

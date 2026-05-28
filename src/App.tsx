@@ -45,6 +45,7 @@ export function App() {
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [importDraft, setImportDraft] = useState<ImportDraft | null>(null);
   const [noticeDialog, setNoticeDialog] = useState<string | null>(null);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const outputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const outputJson = useMemo(() => serializeClipboardJson(character), [character]);
@@ -177,6 +178,7 @@ export function App() {
     setCharacter(createEmptyCharacter());
     setCopyState("idle");
     setImportDraft(null);
+    setResetConfirmOpen(false);
   }
 
   return (
@@ -268,7 +270,7 @@ export function App() {
             {copyState === "error" && <p className="message error">コピーに失敗しました。出力JSONを手動でコピーしてください。</p>}
           </div>
           <div className="reset-actions">
-            <button className="danger-button" type="button" onClick={resetCharacter}>
+            <button className="danger-button" type="button" onClick={() => setResetConfirmOpen(true)}>
               リセット
             </button>
           </div>
@@ -304,6 +306,7 @@ export function App() {
         />
       )}
       {noticeDialog && <NoticeDialog message={noticeDialog} onClose={() => setNoticeDialog(null)} />}
+      {resetConfirmOpen && <ResetConfirmDialog onCancel={() => setResetConfirmOpen(false)} onConfirm={resetCharacter} />}
     </main>
   );
 }
@@ -346,6 +349,32 @@ function NoticeDialog({ message, onClose }: { message: string; onClose: () => vo
         <div className="dialog-actions">
           <button type="button" onClick={onClose}>
             OK
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ResetConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <section className="notice-dialog" role="dialog" aria-modal="true" aria-labelledby="reset-confirm-title">
+        <div className="dialog-header">
+          <div>
+            <h2 id="reset-confirm-title">リセットしますか？</h2>
+          </div>
+          <button className="secondary-button" type="button" onClick={onCancel}>
+            閉じる
+          </button>
+        </div>
+        <p className="notice-dialog-message">現在の編集内容を破棄して、新しいキャラクターの初期状態に戻します。</p>
+        <div className="dialog-actions">
+          <button className="secondary-button" type="button" onClick={onCancel}>
+            キャンセル
+          </button>
+          <button className="danger-button" type="button" onClick={onConfirm}>
+            リセットする
           </button>
         </div>
       </section>
