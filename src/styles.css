@@ -36,7 +36,10 @@ button {
 
 .file-button {
   align-items: center;
+  background: #2b6f68;
+  border: 1px solid #2b6f68;
   border-radius: 6px;
+  color: #ffffff;
   cursor: pointer;
   display: inline-flex;
   font-weight: 700;
@@ -71,6 +74,16 @@ button:disabled {
   background: #ffffff;
   border-color: #b8c4bc;
   color: #2d4038;
+}
+
+.apply-button {
+  background: #24764f;
+  border-color: #24764f;
+}
+
+.danger-button {
+  background: #ad342f;
+  border-color: #ad342f;
 }
 
 textarea,
@@ -138,6 +151,40 @@ h2 {
   grid-template-columns: minmax(360px, 0.9fr) minmax(480px, 1.4fr);
   margin: 0 auto;
   max-width: 1440px;
+}
+
+.app-footer {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  margin: 22px auto 0;
+  max-width: 1440px;
+}
+
+.credit-link {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d8ded8;
+  border-radius: 999px;
+  color: #2d4038;
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+.credit-link:hover {
+  border-color: #9db8af;
+  color: #214d48;
+}
+
+.credit-link span {
+  color: #68756e;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .io-pane,

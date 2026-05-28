@@ -215,11 +215,42 @@ describe("App", () => {
     expect(screen.getByText("クリップボードにコピーしました。")).toBeInTheDocument();
   });
 
-  it("saves the current character as a local JSON file", async () => {
+  it("saves the current character through a save dialog when supported", async () => {
+    const write = vi.fn().mockResolvedValue(undefined);
+    const close = vi.fn().mockResolvedValue(undefined);
+    const showSaveFilePicker = vi.fn().mockResolvedValue({
+      createWritable: vi.fn().mockResolvedValue({ write, close })
+    });
+    const user = userEvent.setup();
+    Object.defineProperty(window, "showSaveFilePicker", {
+      configurable: true,
+      value: showSaveFilePicker
+    });
+    render(<App />);
+
+    await user.clear(screen.getByLabelText("名前"));
+    await user.type(screen.getByLabelText("名前"), "Min/Net");
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(showSaveFilePicker).toHaveBeenCalledWith(
+      expect.objectContaining({
+        suggestedName: "Min_Net.ccfolia-character.json"
+      })
+    );
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('"kind": "character"'));
+    expect(close).toHaveBeenCalled();
+    expect(await screen.findByText("指定した場所にローカルファイルを保存しました。")).toBeInTheDocument();
+  });
+
+  it("falls back to downloading the local JSON file when save dialog is unavailable", async () => {
     const createObjectURL = vi.fn(() => "blob:character-json");
     const revokeObjectURL = vi.fn();
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const user = userEvent.setup();
+    Object.defineProperty(window, "showSaveFilePicker", {
+      configurable: true,
+      value: undefined
+    });
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
       value: createObjectURL
@@ -237,7 +268,7 @@ describe("App", () => {
     expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(click).toHaveBeenCalled();
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:character-json");
-    expect(screen.getByText("ローカルファイルを保存しました。")).toBeInTheDocument();
+    expect(screen.getByText("ブラウザのダウンロード先にローカルファイルを保存しました。")).toBeInTheDocument();
     click.mockRestore();
   });
 

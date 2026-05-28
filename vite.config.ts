@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: "docs",
-    emptyOutDir: true,
+    emptyOutDir: false,
     reportCompressedSize: false
   }
 });

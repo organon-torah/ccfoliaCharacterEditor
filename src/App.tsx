@@ -109,18 +109,51 @@ export function App() {
     }
   }
 
-  function saveLocalFile() {
-    const blob = new Blob([outputJson], { type: "application/json" });
+  async function saveLocalFile() {
+    const fileName = `${sanitizeFileName(character.name || "character")}.ccfolia-character.json`;
+
+    try {
+      if ("showSaveFilePicker" in window && typeof window.showSaveFilePicker === "function") {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [
+            {
+              description: "CCFOLIA Character JSON",
+              accept: { "application/json": [".json"] }
+            }
+          ]
+        });
+        const writable = await handle.createWritable();
+
+        await writable.write(outputJson);
+        await writable.close();
+        setFileMessage("指定した場所にローカルファイルを保存しました。");
+        return;
+      }
+
+      downloadLocalFile(outputJson, fileName);
+      setFileMessage("ブラウザのダウンロード先にローカルファイルを保存しました。");
+    } catch (error) {
+      if (isAbortError(error)) {
+        setFileMessage("ローカルファイルの保存をキャンセルしました。");
+        return;
+      }
+
+      setFileMessage("ローカルファイルを保存できませんでした。");
+    }
+  }
+
+  function downloadLocalFile(content: string, fileName: string) {
+    const blob = new Blob([content], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `${sanitizeFileName(character.name || "character")}.ccfolia-character.json`;
+    link.download = fileName;
     document.body.append(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    setFileMessage("ローカルファイルを保存しました。");
   }
 
   async function loadLocalFile(file: File | undefined) {
@@ -197,7 +230,7 @@ export function App() {
                 <button type="button" onClick={saveLocalFile}>
                   保存
                 </button>
-                <label className="file-button secondary-button">
+                <label className="file-button">
                   読み込む
                   <input
                     className="file-input"
@@ -232,6 +265,12 @@ export function App() {
 
         <CharacterForm character={character} updateField={updateField} />
       </div>
+      <footer className="app-footer">
+        <a className="credit-link" href="https://organontorah.wixsite.com/planes" target="_blank" rel="noreferrer">
+          <span>Created by</span>
+          巡涯学派
+        </a>
+      </footer>
       {importDraft && (
         <ImportReviewDialog
           current={character}
@@ -260,6 +299,10 @@ export function App() {
 
 function sanitizeFileName(value: string): string {
   return value.trim().replace(/[\\/:*?"<>|]+/g, "_") || "character";
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 function readFileText(file: File): Promise<string> {
@@ -331,16 +374,16 @@ function ImportReviewDialog({
           </button>
         </div>
         <div className="dialog-actions">
-          <button type="button" onClick={onSelectAll}>
+          <button className="secondary-button" type="button" onClick={onSelectAll}>
             すべて選択
           </button>
           <button className="secondary-button" type="button" onClick={onClearAll}>
             すべて外す
           </button>
-          <button className="secondary-button" type="button" onClick={onApplySelected} disabled={draft.selectedIds.length === 0}>
+          <button className="apply-button" type="button" onClick={onApplySelected} disabled={draft.selectedIds.length === 0}>
             選択項目を上書き
           </button>
-          <button type="button" onClick={onApplyAll}>
+          <button className="danger-button" type="button" onClick={onApplyAll}>
             すべて上書き
           </button>
         </div>
