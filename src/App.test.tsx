@@ -75,6 +75,30 @@ describe("App", () => {
     expect(screen.getByLabelText("メモ")).toHaveValue("");
   });
 
+  it("does not overwrite color when imported JSON omits color", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("色"), { target: { value: "#123456" } });
+    fireEvent.change(screen.getByLabelText("入力JSON"), {
+      target: {
+        value: JSON.stringify({
+          kind: "character",
+          data: {
+            name: "Imported without color"
+          }
+        })
+      }
+    });
+    await user.click(getJsonLoadButton());
+
+    expect(screen.getByRole("dialog", { name: "差分を確認" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "色" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "すべて上書き" }));
+
+    expect(screen.getByLabelText("色")).toHaveValue("#123456");
+  });
+
   it("reviews status and params as individual differences", async () => {
     const user = userEvent.setup();
     render(<App />);

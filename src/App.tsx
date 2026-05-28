@@ -20,6 +20,9 @@ type ImportDraft = {
   diffs: ImportDiff[];
   selectedIds: string[];
 };
+type ImportOptions = {
+  includeColor: boolean;
+};
 
 const IMPORT_FIELDS: Array<{ key: ImportKey; label: string }> = [
   { key: "name", label: "名前" },
@@ -53,7 +56,7 @@ export function App() {
   function loadJson() {
     try {
       const parsed = parseClipboardJson(inputJson);
-      prepareImport(parsed.data as Character, "JSON", setParseMessage);
+      prepareImport(parsed.data as Character, "JSON", setParseMessage, { includeColor: hasExplicitColor(inputJson) });
     } catch (error) {
       setParseMessage(error instanceof Error ? error.message : "JSONを読み込めませんでした。");
     }
@@ -61,14 +64,14 @@ export function App() {
 
   function loadEditScreenText() {
     try {
-      prepareImport(parseEditScreenText(editScreenText), "編集画面テキスト", setEditTextMessage);
+      prepareImport(parseEditScreenText(editScreenText), "編集画面テキスト", setEditTextMessage, { includeColor: false });
     } catch (error) {
       setEditTextMessage(error instanceof Error ? error.message : "編集画面テキストを読み込めませんでした。");
     }
   }
 
-  function prepareImport(incoming: Character, source: string, setMessage: (message: string) => void) {
-    const diffs = getImportDiffs(character, incoming);
+  function prepareImport(incoming: Character, source: string, setMessage: (message: string) => void, options: ImportOptions) {
+    const diffs = getImportDiffs(character, incoming, options);
 
     if (diffs.length === 0) {
       setMessage(`${source}に現在のデータとの差分はありません。`);
@@ -163,8 +166,9 @@ export function App() {
     }
 
     try {
-      const parsed = parseClipboardJson(await readFileText(file));
-      prepareImport(parsed.data as Character, `ファイル「${file.name}」`, setFileMessage);
+      const fileText = await readFileText(file);
+      const parsed = parseClipboardJson(fileText);
+      prepareImport(parsed.data as Character, `ファイル「${file.name}」`, setFileMessage, { includeColor: hasExplicitColor(fileText) });
     } catch (error) {
       setFileMessage(error instanceof Error ? error.message : "ファイルを読み込めませんでした。");
     }
@@ -317,6 +321,16 @@ function sanitizeFileName(value: string): string {
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
+}
+
+function hasExplicitColor(input: string): boolean {
+  try {
+    const parsed = JSON.parse(input) as unknown;
+
+    return isRecord(parsed) && isRecord(parsed.data) && Object.prototype.hasOwnProperty.call(parsed.data, "color");
+  } catch {
+    return false;
+  }
 }
 
 function readFileText(file: File): Promise<string> {
@@ -770,8 +784,9 @@ function updateArrayItem<T>(items: T[], onChange: (items: T[]) => void, index: n
   onChange(items.map((current, currentIndex) => (currentIndex === index ? item : current)));
 }
 
-function getImportDiffs(current: Character, incoming: Character): ImportDiff[] {
+function getImportDiffs(current: Character, incoming: Character, options: ImportOptions): ImportDiff[] {
   const baseDiffs = IMPORT_FIELDS.filter((field) => field.key !== "status" && field.key !== "params")
+    .filter((field) => field.key !== "color" || options.includeColor)
     .filter((field) => !isSameImportValue(current[field.key], incoming[field.key]))
     .map((field) => ({
       id: field.key,
