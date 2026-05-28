@@ -215,6 +215,47 @@ describe("App", () => {
     expect(screen.getByText("クリップボードにコピーしました。")).toBeInTheDocument();
   });
 
+  it("saves the current character as a local JSON file", async () => {
+    const createObjectURL = vi.fn(() => "blob:character-json");
+    const revokeObjectURL = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const user = userEvent.setup();
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectURL
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectURL
+    });
+    render(<App />);
+
+    await user.clear(screen.getByLabelText("名前"));
+    await user.type(screen.getByLabelText("名前"), "Min/Net");
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(click).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:character-json");
+    expect(screen.getByText("ローカルファイルを保存しました。")).toBeInTheDocument();
+    click.mockRestore();
+  });
+
+  it("loads a local JSON file through the import review flow", async () => {
+    const file = new File([JSON.stringify({ kind: "character", data: { name: "Loaded file" } })], "loaded.ccfolia-character.json", {
+      type: "application/json"
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("ローカルファイルを読み込む"), file);
+
+    expect(await screen.findByRole("dialog", { name: "差分を確認" })).toBeInTheDocument();
+    expect(screen.getByText("ファイル「loaded.ccfolia-character.json」を読み込みました。差分を確認してください。")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "すべて上書き" }));
+    expect(screen.getByLabelText("名前")).toHaveValue("Loaded file");
+  });
+
   it("selects the output JSON when clipboard copy fails", async () => {
     const user = userEvent.setup();
     Object.defineProperty(window.navigator, "clipboard", {

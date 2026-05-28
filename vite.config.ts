@@ -2,9 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
+  base: "/ccfoliaCharacterEditor/",
   plugins: [react()],
   build: {
-    emptyOutDir: false,
+    outDir: "docs",
+    emptyOutDir: true,
     reportCompressedSize: false
   }
 });

@@ -34,6 +34,32 @@ button {
   padding: 0 14px;
 }
 
+.file-button {
+  align-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 14px;
+  position: relative;
+}
+
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.file-input {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
 button:disabled {
   background: #d7ddd8;
   border-color: #c3ccc5;

@@ -41,6 +41,7 @@ export function App() {
   const [character, setCharacter] = useState<Character>(() => createEmptyCharacter());
   const [parseMessage, setParseMessage] = useState("CCFOLIA用のキャラクターJSONを貼り付けて読み込めます。");
   const [editTextMessage, setEditTextMessage] = useState("CCFOLIAのキャラクター編集画面を全選択コピーして貼り付けられます。");
+  const [fileMessage, setFileMessage] = useState("ローカルファイルとして保存・読み込みできます。");
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [importDraft, setImportDraft] = useState<ImportDraft | null>(null);
   const [noticeDialog, setNoticeDialog] = useState<string | null>(null);
@@ -108,6 +109,33 @@ export function App() {
     }
   }
 
+  function saveLocalFile() {
+    const blob = new Blob([outputJson], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `${sanitizeFileName(character.name || "character")}.ccfolia-character.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setFileMessage("ローカルファイルを保存しました。");
+  }
+
+  async function loadLocalFile(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const parsed = parseClipboardJson(await readFileText(file));
+      prepareImport(parsed.data as Character, `ファイル「${file.name}」`, setFileMessage);
+    } catch (error) {
+      setFileMessage(error instanceof Error ? error.message : "ファイルを読み込めませんでした。");
+    }
+  }
+
   function updateField<K extends keyof Character>(key: K, value: Character[K]) {
     setCharacter((current) => ({ ...current, [key]: value }));
   }
@@ -162,6 +190,33 @@ export function App() {
             </p>
           </div>
 
+          <div className="panel-block">
+            <div className="section-heading">
+              <h2>ローカルファイル</h2>
+              <div className="file-actions">
+                <button type="button" onClick={saveLocalFile}>
+                  保存
+                </button>
+                <label className="file-button secondary-button">
+                  読み込む
+                  <input
+                    className="file-input"
+                    type="file"
+                    accept=".json,application/json"
+                    aria-label="ローカルファイルを読み込む"
+                    onChange={(event) => {
+                      void loadLocalFile(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+            <p className={fileMessage.includes("必要") || fileMessage.includes("正しく") || fileMessage.includes("読み込めません") ? "message error" : "message"}>
+              {fileMessage}
+            </p>
+          </div>
+
           <div className="panel-block output-block">
             <div className="section-heading">
               <h2>出力JSON</h2>
@@ -201,6 +256,24 @@ export function App() {
       {noticeDialog && <NoticeDialog message={noticeDialog} onClose={() => setNoticeDialog(null)} />}
     </main>
   );
+}
+
+function sanitizeFileName(value: string): string {
+  return value.trim().replace(/[\\/:*?"<>|]+/g, "_") || "character";
+}
+
+function readFileText(file: File): Promise<string> {
+  if ("text" in file && typeof file.text === "function") {
+    return file.text();
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("ファイルを読み込めませんでした。")));
+    reader.readAsText(file);
+  });
 }
 
 function NoticeDialog({ message, onClose }: { message: string; onClose: () => void }) {
