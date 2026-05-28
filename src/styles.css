@@ -212,6 +212,12 @@ h2 {
   min-height: 420px;
 }
 
+.reset-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
 .form-pane {
   padding: 18px;
 }
@@ -388,6 +394,8 @@ h2 {
   border: 1px solid #cbd4cc;
   border-radius: 8px;
   box-shadow: 0 24px 70px rgba(24, 32, 29, 0.28);
+  display: flex;
+  flex-direction: column;
   max-height: min(760px, 92vh);
   max-width: 1080px;
   overflow: hidden;
@@ -432,8 +440,9 @@ h2 {
 
 .diff-list {
   display: grid;
+  flex: 1;
   gap: 8px;
-  max-height: calc(92vh - 170px);
+  min-height: 0;
   overflow: auto;
   padding: 14px 18px 18px;
 }

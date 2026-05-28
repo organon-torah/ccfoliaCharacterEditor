@@ -29,6 +29,18 @@ describe("App", () => {
     expect(screen.getByPlaceholderText(/SampleName/)).toBeInTheDocument();
   });
 
+  it("resets the current character from the output area", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.clear(screen.getByLabelText("名前"));
+    await user.type(screen.getByLabelText("名前"), "Changed");
+    await user.click(screen.getByRole("button", { name: "リセット" }));
+
+    expect(screen.getByLabelText("名前")).toHaveValue("新しいキャラクター");
+    expect(getOutputValue()).toContain('"name": "新しいキャラクター"');
+  });
+
   it("reviews import differences before applying selected fields", async () => {
     const user = userEvent.setup();
     render(<App />);

@@ -173,6 +173,12 @@ export function App() {
     setCharacter((current) => ({ ...current, [key]: value }));
   }
 
+  function resetCharacter() {
+    setCharacter(createEmptyCharacter());
+    setCopyState("idle");
+    setImportDraft(null);
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -260,6 +266,11 @@ export function App() {
             <textarea ref={outputRef} className="code-area output" value={outputJson} readOnly spellCheck={false} aria-label="出力JSON" />
             {copyState === "success" && <p className="message success">クリップボードにコピーしました。</p>}
             {copyState === "error" && <p className="message error">コピーに失敗しました。出力JSONを手動でコピーしてください。</p>}
+          </div>
+          <div className="reset-actions">
+            <button className="danger-button" type="button" onClick={resetCharacter}>
+              リセット
+            </button>
           </div>
         </section>
 
