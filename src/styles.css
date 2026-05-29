@@ -780,6 +780,73 @@ h2 {
 }
 
 @media (max-width: 680px) {
+  .dialog-actions {
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .dialog-actions button {
+    flex: 1 1 140px;
+  }
+
+  .diff-list {
+    padding: 10px;
+  }
+
+  .diff-row {
+    gap: 7px;
+    grid-template-columns: 22px minmax(0, 1fr) 18px minmax(0, 1fr);
+    grid-template-areas:
+      "check label label label"
+      "current current arrow incoming";
+    padding: 8px;
+  }
+
+  .diff-row input {
+    grid-area: check;
+  }
+
+  .diff-label {
+    font-size: 0.86rem;
+    grid-area: label;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .diff-row > .diff-value {
+    grid-area: current;
+  }
+
+  .diff-row > .diff-value.incoming {
+    grid-area: incoming;
+  }
+
+  .diff-value {
+    padding: 8px;
+  }
+
+  .diff-object {
+    gap: 2px;
+    grid-template-columns: 1fr;
+  }
+
+  .diff-object dt {
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .diff-object dd {
+    font-size: 0.76rem;
+  }
+
+  .diff-object dd + dt {
+    margin-top: 4px;
+  }
+
+  .diff-arrow {
+    grid-area: arrow;
+  }
+
   .form-grid,
   .form-grid.compact,
   .toggles {

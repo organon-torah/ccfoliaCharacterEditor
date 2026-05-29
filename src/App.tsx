@@ -915,10 +915,13 @@ function getArrayDiffs<T extends { label: string }>(
   labelPrefix: string,
   comparable: (item: T) => unknown
 ): ImportDiff[] {
-  const ids = new Set([...currentItems.map((item, index) => getArrayItemId(item, index)), ...incomingItems.map((item, index) => getArrayItemId(item, index))]);
+  const hasInitialBlankOnly = isInitialBlankArray(currentItems, key);
+  const currentIds = hasInitialBlankOnly ? [] : currentItems.map((item, index) => getArrayItemId(item, index));
+  const ids = new Set([...currentIds, ...incomingItems.map((item, index) => getArrayItemId(item, index))]);
 
   return [...ids].flatMap((id) => {
-    const currentItem = findArrayItem(currentItems, id);
+    const incomingIndex = incomingItems.findIndex((item, index) => getArrayItemId(item, index) === id);
+    const currentItem = hasInitialBlankOnly && incomingIndex === 0 ? currentItems[0] : findArrayItem(currentItems, id);
     const incomingItem = findArrayItem(incomingItems, id);
 
     if (isSameImportValue(currentItem ? comparable(currentItem) : null, incomingItem ? comparable(incomingItem) : null)) {
@@ -934,11 +937,24 @@ function getArrayDiffs<T extends { label: string }>(
         incomingValue: incomingItem ?? null,
         apply: (character: Character, incoming: Character) => ({
           ...character,
-          [key]: mergeArrayItem(character[key] as unknown as T[], incoming[key] as unknown as T[], id)
+          [key]: mergeArrayItem(character[key] as unknown as T[], incoming[key] as unknown as T[], id, key)
         })
       }
     ];
   });
+}
+
+function isInitialBlankArray<T extends { label: string }>(items: T[], key: "status" | "params"): boolean {
+  if (items.length !== 1 || items[0].label.trim() !== "") {
+    return false;
+  }
+
+  const item = items[0] as Record<string, unknown>;
+  if (key === "status") {
+    return item.value === 0 && item.max === 0;
+  }
+
+  return item.value === "" || item.value === 0;
 }
 
 function getArrayItemId(item: { label: string }, index: number): string {
@@ -949,12 +965,18 @@ function findArrayItem<T extends { label: string }>(items: T[], id: string): T |
   return items.find((item, index) => getArrayItemId(item, index) === id);
 }
 
-function mergeArrayItem<T extends { label: string }>(currentItems: T[], incomingItems: T[], id: string): T[] {
+function mergeArrayItem<T extends { label: string }>(currentItems: T[], incomingItems: T[], id: string, key: "status" | "params"): T[] {
   const incomingItem = findArrayItem(incomingItems, id);
   const currentIndex = currentItems.findIndex((item, index) => getArrayItemId(item, index) === id);
+  const incomingIndex = incomingItems.findIndex((item, index) => getArrayItemId(item, index) === id);
+  const shouldReplaceInitialBlank = isInitialBlankArray(currentItems, key) && incomingIndex === 0 && incomingItem;
 
   if (!incomingItem) {
     return currentIndex >= 0 ? currentItems.filter((_, index) => index !== currentIndex) : currentItems;
+  }
+
+  if (shouldReplaceInitialBlank) {
+    return [incomingItem];
   }
 
   if (currentIndex >= 0) {

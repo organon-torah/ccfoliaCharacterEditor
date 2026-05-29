@@ -249,6 +249,35 @@ describe("App", () => {
     expect(getOutputValue()).not.toContain('"label": "器用B"');
   });
 
+  it("replaces the initial blank status and param rows with the first imported rows", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("入力JSON"), {
+      target: {
+        value: JSON.stringify({
+          kind: "character",
+          data: {
+            status: [{ label: "HP", value: 12, max: 20 }],
+            params: [{ label: "冒険者レベル", value: "5" }]
+          }
+        })
+      }
+    });
+    await user.click(getJsonLoadButton());
+
+    const hpDiff = screen.getByRole("checkbox", { name: "ステータス: HP" }).closest(".diff-row") as HTMLElement;
+    const levelDiff = screen.getByRole("checkbox", { name: "パラメータ: 冒険者レベル" }).closest(".diff-row") as HTMLElement;
+    expect(within(hpDiff).getByText("(空)")).toBeInTheDocument();
+    expect(within(levelDiff).getAllByText("(空)").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "すべて上書き" }));
+
+    const output = JSON.parse(getOutputValue());
+    expect(output.data.status).toEqual([{ label: "HP", value: 12, max: 20 }]);
+    expect(output.data.params).toEqual([{ label: "冒険者レベル", value: "5" }]);
+  });
+
   it("can apply all import differences at once", async () => {
     const user = userEvent.setup();
     render(<App />);
