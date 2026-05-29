@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createEmptyCharacter, parseClipboardJson, serializeClipboardJson } from "./lib/clipboard";
 import { parseEditScreenText } from "./lib/editScreenText";
 import type { Character, CharacterParam, CharacterStatus } from "./types/character";
@@ -566,16 +566,7 @@ function CharacterForm({ character, updateField }: CharacterFormProps) {
         <TextField label="名前" value={character.name} onChange={(value) => updateField("name", value)} />
         <NumberField label="イニシアティブ" value={character.initiative} onChange={(value) => updateField("initiative", value)} />
         <TextField label="外部URL" value={character.externalUrl} onChange={(value) => updateField("externalUrl", value)} />
-        <label className="field color-field">
-          <span>色</span>
-          <span className="color-control">
-            <input type="color" value={character.color} onChange={(event) => updateField("color", event.target.value)} aria-label="色" />
-            <span className="color-code">{character.color}</span>
-            <span className="chat-color-preview" style={{ color: character.color }}>
-              チャット表示
-            </span>
-          </span>
-        </label>
+        <ColorField color={character.color} onChange={(value) => updateField("color", value)} />
       </div>
 
       <label className="field full">
@@ -600,6 +591,84 @@ function CharacterForm({ character, updateField }: CharacterFormProps) {
       />
     </section>
   );
+}
+
+function ColorField({ color, onChange }: { color: string; onChange: (value: string) => void }) {
+  const [colorText, setColorText] = useState(color.replace(/^#/, ""));
+
+  useEffect(() => {
+    setColorText(color.replace(/^#/, ""));
+  }, [color]);
+
+  function updateColorText(value: string) {
+    const next = value.replace(/^#/, "").slice(0, 6);
+    setColorText(next);
+    const normalized = normalizeFullColorCode(next);
+    if (normalized) {
+      onChange(normalized);
+    }
+  }
+
+  function settleColorText() {
+    const normalized = normalizeColorCode(colorText);
+    if (normalized) {
+      onChange(normalized);
+      setColorText(normalized.replace(/^#/, ""));
+      return;
+    }
+
+    setColorText(color.replace(/^#/, ""));
+  }
+
+  function handleColorKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.currentTarget.blur();
+    }
+  }
+
+  return (
+    <div className="field color-field">
+      <span>色</span>
+      <span className="color-control">
+        <input type="color" value={color} onChange={(event) => onChange(event.target.value)} aria-label="色" />
+        <span className="color-code-wrap">
+          <span className="color-prefix">#</span>
+          <input
+            className="color-code-input"
+            value={colorText}
+            maxLength={6}
+            onBlur={settleColorText}
+            onChange={(event) => updateColorText(event.target.value)}
+            onKeyDown={handleColorKeyDown}
+            aria-label="カラーコード"
+            spellCheck={false}
+          />
+        </span>
+        <span className="chat-color-preview" style={{ color }}>
+          チャット表示
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function normalizeColorCode(value: string) {
+  const trimmed = value.trim().replace(/^#/, "");
+  const shortMatch = /^([0-9a-fA-F]{3})$/.exec(trimmed);
+  if (shortMatch) {
+    return `#${shortMatch[1]
+      .split("")
+      .map((character) => `${character}${character}`)
+      .join("")
+      .toLowerCase()}`;
+  }
+
+  return normalizeFullColorCode(trimmed);
+}
+
+function normalizeFullColorCode(value: string) {
+  const trimmed = value.trim().replace(/^#/, "");
+  return /^[0-9a-fA-F]{6}$/.test(trimmed) ? `#${trimmed.toLowerCase()}` : null;
 }
 
 function CommandEditor({

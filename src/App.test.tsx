@@ -99,6 +99,32 @@ describe("App", () => {
     expect(screen.getByLabelText("色")).toHaveValue("#123456");
   });
 
+  it("edits the color by color code text", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.clear(screen.getByLabelText("カラーコード"));
+    await user.type(screen.getByLabelText("カラーコード"), "123456");
+
+    expect(screen.getByLabelText("色")).toHaveValue("#123456");
+    expect(screen.getByLabelText("カラーコード")).toHaveValue("123456");
+    expect(getOutputValue()).toContain('"color": "#123456"');
+  });
+
+  it("normalizes three digit color codes only after settling the field", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.clear(screen.getByLabelText("カラーコード"));
+    await user.type(screen.getByLabelText("カラーコード"), "abc");
+
+    expect(screen.getByLabelText("色")).toHaveValue("#888888");
+    fireEvent.blur(screen.getByLabelText("カラーコード"));
+
+    expect(screen.getByLabelText("色")).toHaveValue("#aabbcc");
+    expect(screen.getByLabelText("カラーコード")).toHaveValue("aabbcc");
+  });
+
   it("reviews status and params as individual differences", async () => {
     const user = userEvent.setup();
     render(<App />);
