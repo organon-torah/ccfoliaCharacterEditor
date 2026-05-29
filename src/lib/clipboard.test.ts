@@ -50,4 +50,11 @@ describe("clipboard helpers", () => {
     });
     expect(serialized.data).not.toHaveProperty("hideStatus");
   });
+
+  it("creates a new character with one blank status and param row", () => {
+    const character = createEmptyCharacter();
+
+    expect(character.status).toEqual([{ label: "", value: 0, max: 0 }]);
+    expect(character.params).toEqual([{ label: "", value: "" }]);
+  });
 });

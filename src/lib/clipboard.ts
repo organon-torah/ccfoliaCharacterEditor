@@ -109,7 +109,11 @@ export function serializeClipboardJson(character: Character): string {
 }
 
 export function createEmptyCharacter(): Character {
-  return normalizeCharacterData({ name: "新しいキャラクター" });
+  return normalizeCharacterData({
+    name: "新しいキャラクター",
+    status: [{ label: "", value: 0, max: 0 }],
+    params: [{ label: "", value: "" }]
+  });
 }
 
 function toSerializableCharacter(character: Character): Partial<Character> {

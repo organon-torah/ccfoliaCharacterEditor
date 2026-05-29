@@ -27,6 +27,10 @@ describe("App", () => {
 
     expect(screen.getByLabelText("入力JSON")).toHaveValue("");
     expect(screen.getByPlaceholderText(/SampleName/)).toBeInTheDocument();
+    expect(screen.getAllByLabelText("ラベル")).toHaveLength(2);
+    expect(screen.getByLabelText("現在値")).toHaveValue(0);
+    expect(screen.getByLabelText("最大値")).toHaveValue(0);
+    expect(screen.getByLabelText("値")).toHaveValue("");
   });
 
   it("resets the current character from the output area", async () => {
@@ -43,6 +47,8 @@ describe("App", () => {
 
     expect(screen.getByLabelText("名前")).toHaveValue("新しいキャラクター");
     expect(getOutputValue()).toContain('"name": "新しいキャラクター"');
+    expect(getOutputValue()).toContain('"status"');
+    expect(getOutputValue()).toContain('"params"');
     expect(screen.queryByRole("dialog", { name: "リセットしますか？" })).not.toBeInTheDocument();
   });
 
@@ -198,12 +204,11 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
-    await user.clear(screen.getByLabelText("現在値"));
-    await user.type(screen.getByLabelText("現在値"), "8");
-    await user.clear(screen.getByLabelText("最大値"));
-    await user.type(screen.getByLabelText("最大値"), "20");
+    await user.clear(screen.getAllByLabelText("現在値")[0]);
+    await user.type(screen.getAllByLabelText("現在値")[0], "8");
+    await user.clear(screen.getAllByLabelText("最大値")[0]);
+    await user.type(screen.getAllByLabelText("最大値")[0], "20");
     fireEvent.change(screen.getByLabelText("入力JSON"), {
       target: {
         value: JSON.stringify({
@@ -299,10 +304,9 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
-    await user.clear(screen.getByLabelText("現在値"));
-    await user.type(screen.getByLabelText("現在値"), "8");
+    await user.clear(screen.getAllByLabelText("現在値")[0]);
+    await user.type(screen.getAllByLabelText("現在値")[0], "8");
     await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[1], "MP");
 
@@ -328,9 +332,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
-    await user.click(getArraySectionAddButton("パラメータ"));
     await user.type(screen.getAllByLabelText("ラベル")[1], "器用B");
 
     const referenceToolbar = screen.getByLabelText("チャットパレット引用");
