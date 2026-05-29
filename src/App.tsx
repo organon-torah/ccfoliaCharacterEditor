@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { createEmptyCharacter, parseClipboardJson, serializeClipboardJson } from "./lib/clipboard";
 import { parseEditScreenText } from "./lib/editScreenText";
 import type { Character, CharacterParam, CharacterStatus } from "./types/character";
@@ -327,10 +327,14 @@ function hasExplicitColor(input: string): boolean {
   try {
     const parsed = JSON.parse(input) as unknown;
 
-    return isRecord(parsed) && isRecord(parsed.data) && Object.prototype.hasOwnProperty.call(parsed.data, "color");
+    return isRecord(parsed) && isRecord(parsed.data) && isImportableColor(parsed.data.color);
   } catch {
     return false;
   }
+}
+
+function isImportableColor(value: unknown): boolean {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
 }
 
 function readFileText(file: File): Promise<string> {
@@ -683,10 +687,9 @@ function CommandEditor({
   onChange: (commands: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const references = [
-    ...status.filter((item) => item.label.trim() !== "").map((item) => ({ kind: "ステータス", label: item.label })),
-    ...params.filter((item) => item.label.trim() !== "").map((item) => ({ kind: "パラメータ", label: item.label }))
-  ];
+  const statusReferences = status.filter((item) => item.label.trim() !== "").map((item) => item.label);
+  const paramReferences = params.filter((item) => item.label.trim() !== "").map((item) => item.label);
+  const hasReferences = statusReferences.length > 0 || paramReferences.length > 0;
 
   function insertReference(label: string) {
     const token = `{${label}}`;
@@ -708,15 +711,13 @@ function CommandEditor({
         <h2>チャットパレット</h2>
       </div>
       <div className="reference-toolbar" aria-label="チャットパレット引用">
-        {references.length === 0 ? (
+        {!hasReferences ? (
           <span className="reference-empty">ステータスやパラメータを追加すると引用できます。</span>
         ) : (
-          references.map((reference, index) => (
-            <button className="reference-chip" type="button" key={`${reference.kind}-${reference.label}-${index}`} onClick={() => insertReference(reference.label)}>
-              <span>{reference.kind}</span>
-              {`{${reference.label}}`}
-            </button>
-          ))
+          <>
+            {statusReferences.length > 0 && <ReferenceGroup title="ステータス" labels={statusReferences} onInsert={insertReference} />}
+            {paramReferences.length > 0 && <ReferenceGroup title="パラメータ" labels={paramReferences} onInsert={insertReference} />}
+          </>
         )}
       </div>
       <textarea
@@ -730,17 +731,31 @@ function CommandEditor({
   );
 }
 
+function ReferenceGroup({ title, labels, onInsert }: { title: string; labels: string[]; onInsert: (label: string) => void }) {
+  return (
+    <div className="reference-group">
+      <span className="reference-group-label">{title}</span>
+      {labels.map((label, index) => (
+        <button className="reference-chip" type="button" key={`${title}-${label}-${index}`} onClick={() => onInsert(label)}>
+          {`{${label}}`}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function StatusEditor({ items, onChange }: { items: CharacterStatus[]; onChange: (items: CharacterStatus[]) => void }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   return (
-    <ArraySection title="ステータス" onAdd={() => onChange([...items, { label: "", value: 0, max: 0 }])}>
+    <ArraySection title="ステータス" headerLabels={["ラベル", "現在値", "最大値"]} onAdd={() => onChange([...items, { label: "", value: 0, max: 0 }])}>
       {items.map((item, index) => (
         <div
           className={getDragRowClass(index, dragIndex, dropIndex)}
           key={index}
           onDragOver={(event) => event.preventDefault()}
+          onDrag={(event) => scrollNearViewportEdge(event)}
           onDragEnter={() => setDropIndex(index)}
           onDrop={() => handleDrop(items, onChange, dragIndex, index, setDragIndex, setDropIndex)}
         >
@@ -760,12 +775,13 @@ function ParamEditor({ items, onChange }: { items: CharacterParam[]; onChange: (
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   return (
-    <ArraySection title="パラメータ" onAdd={() => onChange([...items, { label: "", value: "" }])}>
+    <ArraySection title="パラメータ" headerLabels={["ラベル", "値"]} onAdd={() => onChange([...items, { label: "", value: "" }])}>
       {items.map((item, index) => (
         <div
           className={`${getDragRowClass(index, dragIndex, dropIndex)} two-col`}
           key={index}
           onDragOver={(event) => event.preventDefault()}
+          onDrag={(event) => scrollNearViewportEdge(event)}
           onDragEnter={() => setDropIndex(index)}
           onDrop={() => handleDrop(items, onChange, dragIndex, index, setDragIndex, setDropIndex)}
         >
@@ -779,7 +795,7 @@ function ParamEditor({ items, onChange }: { items: CharacterParam[]; onChange: (
   );
 }
 
-function ArraySection({ title, onAdd, children }: { title: string; onAdd: () => void; children: React.ReactNode }) {
+function ArraySection({ title, headerLabels, onAdd, children }: { title: string; headerLabels: string[]; onAdd: () => void; children: React.ReactNode }) {
   return (
     <section className="array-section">
       <div className="section-heading">
@@ -788,7 +804,21 @@ function ArraySection({ title, onAdd, children }: { title: string; onAdd: () => 
           追加
         </button>
       </div>
+      <div className={headerLabels.length === 2 ? "array-header two-col" : "array-header"} aria-hidden="true">
+        <span />
+        {headerLabels.map((label) => (
+          <span className="array-header-label" key={label}>
+            {label}
+          </span>
+        ))}
+        <span />
+      </div>
       <div className="array-list">{children}</div>
+      <div className="array-footer-actions">
+        <button type="button" onClick={onAdd}>
+          追加
+        </button>
+      </div>
     </section>
   );
 }
@@ -993,6 +1023,25 @@ function handleDrop<T>(
 function clearDragState(setDragIndex: (index: number | null) => void, setDropIndex: (index: number | null) => void) {
   setDragIndex(null);
   setDropIndex(null);
+}
+
+function scrollNearViewportEdge(event: DragEvent<HTMLElement>) {
+  const edgeSize = 96;
+  const maxSpeed = 2;
+  const { clientY } = event;
+
+  if (clientY <= 0) {
+    return;
+  }
+
+  if (clientY < edgeSize) {
+    window.scrollBy({ top: -Math.ceil(((edgeSize - clientY) / edgeSize) * maxSpeed), behavior: "auto" });
+    return;
+  }
+
+  if (window.innerHeight - clientY < edgeSize) {
+    window.scrollBy({ top: Math.ceil(((edgeSize - (window.innerHeight - clientY)) / edgeSize) * maxSpeed), behavior: "auto" });
+  }
 }
 
 function getDragRowClass(index: number, dragIndex: number | null, dropIndex: number | null): string {

@@ -99,6 +99,75 @@ describe("App", () => {
     expect(screen.getByLabelText("色")).toHaveValue("#123456");
   });
 
+  it("overwrites color when imported JSON includes color", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("色"), { target: { value: "#123456" } });
+    fireEvent.change(screen.getByLabelText("入力JSON"), {
+      target: {
+        value: JSON.stringify({
+          kind: "character",
+          data: {
+            name: "Imported with color",
+            color: "#654321"
+          }
+        })
+      }
+    });
+    await user.click(getJsonLoadButton());
+
+    expect(screen.getByRole("dialog", { name: "差分を確認" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "色" })).not.toBeChecked();
+    await user.click(screen.getByRole("checkbox", { name: "色" }));
+    await user.click(screen.getByRole("button", { name: "選択項目を上書き" }));
+
+    expect(screen.getByLabelText("色")).toHaveValue("#654321");
+    expect(screen.getByLabelText("カラーコード")).toHaveValue("654321");
+  });
+
+  it("does not overwrite color when imported JSON includes an empty or invalid color", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("色"), { target: { value: "#123456" } });
+    fireEvent.change(screen.getByLabelText("入力JSON"), {
+      target: {
+        value: JSON.stringify({
+          kind: "character",
+          data: {
+            name: "Imported with empty color",
+            color: ""
+          }
+        })
+      }
+    });
+    await user.click(getJsonLoadButton());
+
+    expect(screen.getByRole("dialog", { name: "差分を確認" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "色" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "すべて上書き" }));
+    expect(screen.getByLabelText("色")).toHaveValue("#123456");
+
+    fireEvent.change(screen.getByLabelText("入力JSON"), {
+      target: {
+        value: JSON.stringify({
+          kind: "character",
+          data: {
+            name: "Imported with invalid color",
+            color: "red"
+          }
+        })
+      }
+    });
+    await user.click(getJsonLoadButton());
+
+    expect(screen.getByRole("dialog", { name: "差分を確認" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "色" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "すべて上書き" }));
+    expect(screen.getByLabelText("色")).toHaveValue("#123456");
+  });
+
   it("edits the color by color code text", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -129,7 +198,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getAllByRole("button", { name: "追加" })[0]);
+    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
     await user.clear(screen.getByLabelText("現在値"));
     await user.type(screen.getByLabelText("現在値"), "8");
@@ -230,11 +299,11 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getAllByRole("button", { name: "追加" })[0]);
+    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
     await user.clear(screen.getByLabelText("現在値"));
     await user.type(screen.getByLabelText("現在値"), "8");
-    await user.click(screen.getAllByRole("button", { name: "追加" })[0]);
+    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[1], "MP");
 
     expect(getOutputValue()).toContain('"label": "HP"');
@@ -259,13 +328,16 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getAllByRole("button", { name: "追加" })[0]);
+    await user.click(getArraySectionAddButton("ステータス"));
     await user.type(screen.getAllByLabelText("ラベル")[0], "HP");
-    await user.click(screen.getAllByRole("button", { name: "追加" })[1]);
+    await user.click(getArraySectionAddButton("パラメータ"));
     await user.type(screen.getAllByLabelText("ラベル")[1], "器用B");
 
-    await user.click(screen.getByRole("button", { name: "ステータス{HP}" }));
-    await user.click(screen.getByRole("button", { name: "パラメータ{器用B}" }));
+    const referenceToolbar = screen.getByLabelText("チャットパレット引用");
+    expect(within(referenceToolbar).getByText("ステータス")).toBeInTheDocument();
+    expect(within(referenceToolbar).getByText("パラメータ")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "{HP}" }));
+    await user.click(screen.getByRole("button", { name: "{器用B}" }));
 
     expect(screen.getByLabelText("チャットパレット")).toHaveValue("{HP}{器用B}");
     expect(getOutputValue()).toContain('"commands": "{HP}{器用B}"');
@@ -379,4 +451,9 @@ function getOutputValue() {
 
 function getJsonLoadButton() {
   return within(screen.getByLabelText("JSON入出力").querySelector(".panel-block") as HTMLElement).getByRole("button", { name: "読み込む" });
+}
+
+function getArraySectionAddButton(title: string) {
+  const section = screen.getByRole("heading", { name: title }).closest(".array-section") as HTMLElement;
+  return within(section).getAllByRole("button", { name: "追加" })[0];
 }

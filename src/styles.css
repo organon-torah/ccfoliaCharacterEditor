@@ -372,11 +372,25 @@ h2 {
 }
 
 .reference-toolbar {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.reference-group {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 10px;
+}
+
+.reference-group-label {
+  flex-basis: 100%;
+  color: #68756e;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .reference-chip {
@@ -388,12 +402,6 @@ h2 {
   gap: 6px;
   min-height: 30px;
   padding: 0 10px;
-}
-
-.reference-chip span {
-  color: #68756e;
-  font-size: 0.72rem;
-  font-weight: 800;
 }
 
 .reference-empty {
@@ -627,7 +635,32 @@ h2 {
 
 .array-list {
   display: grid;
-  gap: 6px;
+  gap: 5px;
+}
+
+.array-header {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 34px minmax(120px, 1fr) 92px 92px 68px;
+  margin-bottom: 4px;
+  padding: 0 8px;
+}
+
+.array-header.two-col {
+  grid-template-columns: 34px minmax(120px, 0.75fr) minmax(160px, 1.25fr) 68px;
+}
+
+.array-header-label {
+  color: #3d4841;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.array-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 .array-row {
@@ -637,7 +670,7 @@ h2 {
   display: grid;
   gap: 8px;
   grid-template-columns: 34px minmax(120px, 1fr) 92px 92px 68px;
-  padding: 8px;
+  padding: 6px 8px;
   position: relative;
   transition:
     background 120ms ease,
@@ -648,15 +681,23 @@ h2 {
 }
 
 .array-row.two-col {
-  grid-template-columns: 34px minmax(120px, 1fr) minmax(160px, 1.5fr) 68px;
+  grid-template-columns: 34px minmax(120px, 0.75fr) minmax(160px, 1.25fr) 68px;
 }
 
 .array-row .field {
-  gap: 3px;
+  gap: 0;
 }
 
 .array-row .field span {
-  font-size: 0.72rem;
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .array-row input {
@@ -675,8 +716,7 @@ h2 {
 
 .array-row.is-drop-before,
 .array-row.is-drop-after {
-  background: #eef8f4;
-  border-color: #78aaa2;
+  border-color: #dfe6df;
 }
 
 .array-row.is-drop-before::before,
@@ -742,14 +782,72 @@ h2 {
 @media (max-width: 680px) {
   .form-grid,
   .form-grid.compact,
-  .toggles,
-  .array-row,
-  .array-row.two-col {
+  .toggles {
     grid-template-columns: 1fr;
+  }
+
+  .array-row {
+    grid-template-columns: 28px minmax(80px, 1.15fr) minmax(56px, 0.75fr) minmax(56px, 0.75fr) 46px;
+    grid-template-areas: "handle label value max delete";
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .array-header {
+    gap: 6px;
+    grid-template-columns: 28px minmax(80px, 1.15fr) minmax(56px, 0.75fr) minmax(56px, 0.75fr) 46px;
+    padding: 0 6px;
+  }
+
+  .array-row.two-col {
+    grid-template-columns: 28px minmax(64px, 0.75fr) minmax(88px, 1.25fr) 46px;
+    grid-template-areas: "handle label value delete";
+  }
+
+  .array-header.two-col {
+    grid-template-columns: 28px minmax(64px, 0.75fr) minmax(88px, 1.25fr) 46px;
+  }
+
+  .array-row .drag-handle {
+    grid-area: handle;
+  }
+
+  .array-row .field:nth-of-type(1) {
+    grid-area: label;
+  }
+
+  .array-row .field:nth-of-type(2) {
+    grid-area: value;
+  }
+
+  .array-row .field:nth-of-type(3) {
+    grid-area: max;
+  }
+
+  .array-row .delete-button {
+    grid-area: delete;
+  }
+
+  .array-header-label {
+    font-size: 0.7rem;
+  }
+
+  .array-row input {
+    min-height: 32px;
+    padding: 5px 6px;
   }
 
   .drag-handle,
   .delete-button {
-    width: 100%;
+    min-height: 32px;
+    width: auto;
+  }
+
+  .drag-handle {
+    align-self: stretch;
+  }
+
+  .delete-button {
+    font-size: 0.72rem;
   }
 }
