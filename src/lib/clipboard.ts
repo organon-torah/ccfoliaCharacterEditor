@@ -26,6 +26,8 @@ const DEFAULT_CHARACTER: Character = {
 const OMITTED_CHARACTER_KEYS = new Set([
   "iconUrl",
   "faces",
+  "x",
+  "y",
   "angle",
   "height",
   "active",

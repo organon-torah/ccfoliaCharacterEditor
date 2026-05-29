@@ -46,8 +46,10 @@ describe("clipboard helpers", () => {
 
     expect(serialized).toEqual({
       kind: "character",
-      data: expect.objectContaining({ name: "Serialized", x: 10, width: 6 })
+      data: expect.objectContaining({ name: "Serialized", width: 6 })
     });
+    expect(serialized.data).not.toHaveProperty("x");
+    expect(serialized.data).not.toHaveProperty("y");
     expect(serialized.data).not.toHaveProperty("hideStatus");
   });
 

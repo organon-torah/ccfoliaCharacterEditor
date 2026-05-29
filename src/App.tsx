@@ -6,7 +6,7 @@ import type { Character, CharacterParam, CharacterStatus } from "./types/charact
 const SAMPLE_JSON_PLACEHOLDER = JSON.stringify({ kind: "character", data: { name: "SampleName" } }, null, 2);
 
 type CopyState = "idle" | "success" | "error";
-type ImportKey = "name" | "initiative" | "externalUrl" | "color" | "memo" | "width" | "x" | "y" | "status" | "params" | "commands";
+type ImportKey = "name" | "initiative" | "externalUrl" | "color" | "memo" | "width" | "status" | "params" | "commands";
 type ImportDiff = {
   id: string;
   label: string;
@@ -31,8 +31,6 @@ const IMPORT_FIELDS: Array<{ key: ImportKey; label: string }> = [
   { key: "color", label: "色" },
   { key: "memo", label: "メモ" },
   { key: "width", label: "駒サイズ" },
-  { key: "x", label: "X" },
-  { key: "y", label: "Y" },
   { key: "status", label: "ステータス" },
   { key: "params", label: "パラメータ" },
   { key: "commands", label: "チャットパレット" }
@@ -580,8 +578,6 @@ function CharacterForm({ character, updateField }: CharacterFormProps) {
 
       <div className="form-grid compact">
         <NumberField label="駒サイズ" value={character.width} onChange={(value) => updateField("width", value)} />
-        <NumberField label="X" value={character.x} onChange={(value) => updateField("x", value)} />
-        <NumberField label="Y" value={character.y} onChange={(value) => updateField("y", value)} />
       </div>
 
       <StatusEditor items={character.status} onChange={(items) => updateField("status", items)} />
